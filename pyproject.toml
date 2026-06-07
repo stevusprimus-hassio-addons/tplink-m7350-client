@@ -28,9 +28,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "stevusprimus-hassio-addons/tplink-m7350-client"
-Repository = "stevusprimus-hassio-addons/tplink-m7350-client"
-Issues = "stevusprimus-hassio-addons/tplink-m7350-client/issues"
+Homepage = "https://github.com/stevusprimus-hassio-addons/tplink-m7350-client"
+Repository = "https://github.com/stevusprimus-hassio-addons/tplink-m7350-client"
+Issues = "https://github.com/stevusprimus-hassio-addons/tplink-m7350-client/issues"
 
 [project.scripts]
 tplink-m7350 = "tplink_m7350.cli:main"
