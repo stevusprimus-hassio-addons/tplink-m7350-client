@@ -10,7 +10,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import Request, build_opener
 
-from .codec import Base64JsonCodec, Codec, CodecError, JsonObject
+from .codec import Base64JsonCodec, Codec, CodecError, EncryptedJsonCodec, JsonObject
 from .status import summarize_status
 
 
@@ -35,6 +35,7 @@ class M7350Client:
     rsa_public_key: str | None = None
     rsa_modulus: str | None = None
     sequence_number: str | None = None
+    support_gdpr: bool | None = None
     _opener: Any = field(init=False, repr=False)
 
     AUTHENTICATOR = "authenticator"
@@ -44,6 +45,7 @@ class M7350Client:
     ACTION_LOGIN = 1
     ACTION_GET_ATTEMPT = 2
     ACTION_LOGOUT = 3
+    ACTION_FEATURE_LIST = 5
 
     def __post_init__(self) -> None:
         self.host = self.host.rstrip("/") + "/"
@@ -73,6 +75,17 @@ class M7350Client:
             self.load_auth()
         if not self.nonce:
             raise M7350AuthError("router did not provide an auth nonce")
+        if self.support_gdpr is None:
+            self.support_gdpr = self._supports_gdpr()
+        if self.support_gdpr:
+            if not self.rsa_modulus or not self.rsa_public_key or self.sequence_number is None:
+                raise M7350AuthError("router did not provide encrypted-login parameters")
+            self.codec = EncryptedJsonCodec(
+                password=password,
+                rsa_modulus=self.rsa_modulus,
+                rsa_public_key=self.rsa_public_key,
+                sequence_number=int(self.sequence_number),
+            )
 
         digest = hashlib.md5(f"{password}:{self.nonce}".encode()).hexdigest()
         data = self.call(
@@ -92,6 +105,11 @@ class M7350Client:
         self.token = token
         return token
 
+    def feature_list(self) -> JsonObject:
+        """Fetch unauthenticated router feature flags."""
+
+        return self.call(self.WEB_SERVER, self.ACTION_FEATURE_LIST, authenticated=False)
+
     def logout(self) -> JsonObject:
         """Logout and clear the local token."""
 
@@ -106,6 +124,11 @@ class M7350Client:
         if summarize:
             return summarize_status(data)
         return data
+
+    def _supports_gdpr(self) -> bool:
+        data = self.feature_list()
+        others = data.get("others")
+        return bool(isinstance(others, dict) and others.get("supportGDPR"))
 
     def call(
         self,
