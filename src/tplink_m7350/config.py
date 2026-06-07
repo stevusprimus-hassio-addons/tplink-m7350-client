@@ -5,9 +5,12 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from .status import DEFAULT_RATE_UNIT, normalize_rate_unit
+
 
 PASSWORD_KEYS = ("TPLINK_M7350_PASSWORD", "TPLINK_PASSWORD", "ROUTER_PASSWORD")
 HOST_KEYS = ("TPLINK_M7350_IP", "TPLINK_M7350_HOST", "TPLINK_HOST", "ROUTER_HOST")
+RATE_UNIT_KEYS = ("TPLINK_M7350_RATE_UNIT", "TPLINK_RATE_UNIT", "ROUTER_RATE_UNIT")
 DEFAULT_HOST = "http://192.168.0.1"
 
 
@@ -77,6 +80,26 @@ def read_host(cli_host: str | None, dotenv_path: str | Path = ".env") -> str:
             return normalize_host(value)
 
     return DEFAULT_HOST
+
+
+def read_rate_unit(cli_rate_unit: str | None, dotenv_path: str | Path = ".env") -> str:
+    """Return the status speed display unit from CLI, environment, `.env`, or default."""
+
+    if cli_rate_unit:
+        return normalize_rate_unit(cli_rate_unit)
+
+    for key in RATE_UNIT_KEYS:
+        value = os.environ.get(key)
+        if value:
+            return normalize_rate_unit(value)
+
+    dotenv = load_dotenv(dotenv_path)
+    for key in RATE_UNIT_KEYS:
+        value = dotenv.get(key)
+        if value:
+            return normalize_rate_unit(value)
+
+    return DEFAULT_RATE_UNIT
 
 
 def normalize_host(value: str) -> str:

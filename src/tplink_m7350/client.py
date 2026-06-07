@@ -11,7 +11,7 @@ from urllib.parse import urljoin
 from urllib.request import Request, build_opener
 
 from .codec import Base64JsonCodec, Codec, CodecError, EncryptedJsonCodec, JsonObject
-from .status import summarize_status
+from .status import DEFAULT_RATE_UNIT, summarize_status
 
 
 class M7350Error(RuntimeError):
@@ -117,12 +117,12 @@ class M7350Client:
         self.token = None
         return data
 
-    def status(self, *, summarize: bool = False) -> JsonObject:
+    def status(self, *, summarize: bool = False, rate_unit: str = DEFAULT_RATE_UNIT) -> JsonObject:
         """Fetch the data backing `settings.html#Status`."""
 
         data = self.call("status", 0)
         if summarize:
-            return summarize_status(data)
+            return summarize_status(data, rate_unit=rate_unit)
         return data
 
     def _supports_gdpr(self) -> bool:

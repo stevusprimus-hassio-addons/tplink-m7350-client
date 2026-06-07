@@ -35,13 +35,18 @@ Create or edit `examples/.env`:
 ```sh
 TPLINK_M7350_IP=192.168.0.1
 TPLINK_M7350_PASSWORD='your-router-password'
+TPLINK_M7350_RATE_UNIT=KB/s
 ```
 
 Then print the friendly Status JSON:
 
 ```sh
 PYTHONPATH=src .venv/bin/python examples/status.py
+PYTHONPATH=src .venv/bin/python examples/status.py --rate-unit auto
 ```
+
+`TPLINK_M7350_RATE_UNIT` controls both upstream and downstream rate units.
+Allowed values are `auto`, `B/s`, `KB/s`, and `MB/s`; the default is `KB/s`.
 
 ## CLI Examples
 
@@ -49,6 +54,7 @@ PYTHONPATH=src .venv/bin/python examples/status.py
 PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env load-auth
 PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env login
 PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env status
+PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env status --rate-unit MB/s
 PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env status --raw
 PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli call webServer 0 --no-auth
 ```

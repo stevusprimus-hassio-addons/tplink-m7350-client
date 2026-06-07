@@ -1,6 +1,6 @@
 import unittest
 
-from tplink_m7350.status import summarize_status
+from tplink_m7350.status import normalize_rate_unit, summarize_status
 
 
 class StatusTests(unittest.TestCase):
@@ -34,6 +34,31 @@ class StatusTests(unittest.TestCase):
         self.assertEqual(summary["wifi"]["currentClients"], 3)
         self.assertEqual(summary["statistics"]["totalUsed"]["unit"], "MB")
         self.assertEqual(summary["statistics"]["upstreamRate"]["unit"], "KB/s")
+        self.assertEqual(summary["statistics"]["downstreamRate"], {"value": 0.86, "unit": "KB/s"})
+
+    def test_rate_unit_modes(self):
+        data = {"wan": {"txSpeed": 2048, "rxSpeed": 2048}}
+
+        self.assertEqual(
+            summarize_status(data, rate_unit="auto")["statistics"]["downstreamRate"],
+            {"value": 2, "unit": "KB/s"},
+        )
+        self.assertEqual(
+            summarize_status(data, rate_unit="B/s")["statistics"]["downstreamRate"],
+            {"value": 2048, "unit": "B/s"},
+        )
+        self.assertEqual(
+            summarize_status(data, rate_unit="KB/s")["statistics"]["downstreamRate"],
+            {"value": 2, "unit": "KB/s"},
+        )
+        self.assertEqual(
+            summarize_status(data, rate_unit="MB/s")["statistics"]["downstreamRate"],
+            {"value": 0, "unit": "MB/s"},
+        )
+
+    def test_normalize_rate_unit_rejects_unknown_values(self):
+        with self.assertRaises(ValueError):
+            normalize_rate_unit("bananas")
 
 
 if __name__ == "__main__":

@@ -26,10 +26,18 @@ NETWORK_TYPE = {
     7: "LTE+",
 }
 
+RATE_UNIT_AUTO = "auto"
+RATE_UNIT_BPS = "B/s"
+RATE_UNIT_KBPS = "KB/s"
+RATE_UNIT_MBPS = "MB/s"
+DEFAULT_RATE_UNIT = RATE_UNIT_KBPS
+RATE_UNITS = (RATE_UNIT_AUTO, RATE_UNIT_BPS, RATE_UNIT_KBPS, RATE_UNIT_MBPS)
 
-def summarize_status(data: JsonObject) -> JsonObject:
+
+def summarize_status(data: JsonObject, *, rate_unit: str = DEFAULT_RATE_UNIT) -> JsonObject:
     """Extract the main visible Status page values from a raw status response."""
 
+    rate_unit = normalize_rate_unit(rate_unit)
     wan = _dict(data.get("wan"))
     wlan = _dict(data.get("wlan"))
     devices = _dict(data.get("connectedDevices"))
@@ -55,10 +63,40 @@ def summarize_status(data: JsonObject) -> JsonObject:
         "statistics": {
             "totalUsed": _bytes(wan.get("totalStatistics")),
             "dailyUsed": _bytes(wan.get("dailyStatistics")),
-            "upstreamRate": _speed(wan.get("txSpeed")),
-            "downstreamRate": _speed(wan.get("rxSpeed")),
+            "upstreamRate": _speed(wan.get("txSpeed"), rate_unit),
+            "downstreamRate": _speed(wan.get("rxSpeed"), rate_unit),
         },
     }
+
+
+def normalize_rate_unit(value: str | None) -> str:
+    """Normalize user-configurable speed display units."""
+
+    if not value:
+        return DEFAULT_RATE_UNIT
+
+    normalized = value.strip().lower().replace(" ", "")
+    aliases = {
+        "auto": RATE_UNIT_AUTO,
+        "b": RATE_UNIT_BPS,
+        "b/s": RATE_UNIT_BPS,
+        "byte/s": RATE_UNIT_BPS,
+        "bytes/s": RATE_UNIT_BPS,
+        "kb": RATE_UNIT_KBPS,
+        "kbs": RATE_UNIT_KBPS,
+        "kb/s": RATE_UNIT_KBPS,
+        "kib/s": RATE_UNIT_KBPS,
+        "mb": RATE_UNIT_MBPS,
+        "mbs": RATE_UNIT_MBPS,
+        "mb/s": RATE_UNIT_MBPS,
+        "mib/s": RATE_UNIT_MBPS,
+    }
+
+    try:
+        return aliases[normalized]
+    except KeyError as exc:
+        allowed = ", ".join(RATE_UNITS)
+        raise ValueError(f"invalid rate unit {value!r}; expected one of: {allowed}") from exc
 
 
 def _dict(value: Any) -> JsonObject:
@@ -94,16 +132,27 @@ def _bytes(value: Any) -> JsonObject:
     return {"value": _trim(amount), "unit": units[unit_index]}
 
 
-def _speed(value: Any) -> JsonObject:
+def _speed(value: Any, unit: str) -> JsonObject:
     try:
         amount = float(value)
     except (TypeError, ValueError):
         return {"value": value, "unit": None}
 
-    unit = "B/s"
-    if amount > 1024:
+    if unit == RATE_UNIT_AUTO:
+        unit = RATE_UNIT_BPS
+        if amount > 1024:
+            amount /= 1024
+            unit = RATE_UNIT_KBPS
+    elif unit == RATE_UNIT_BPS:
+        pass
+    elif unit == RATE_UNIT_KBPS:
         amount /= 1024
-        unit = "KB/s"
+    elif unit == RATE_UNIT_MBPS:
+        amount /= 1024 * 1024
+    else:
+        unit = normalize_rate_unit(unit)
+        return _speed(value, unit)
+
     return {"value": _trim(amount), "unit": unit}
 
 
