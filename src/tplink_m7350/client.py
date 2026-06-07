@@ -11,6 +11,7 @@ from urllib.parse import urljoin
 from urllib.request import Request, build_opener
 
 from .codec import Base64JsonCodec, Codec, CodecError, JsonObject
+from .status import summarize_status
 
 
 class M7350Error(RuntimeError):
@@ -96,6 +97,14 @@ class M7350Client:
 
         data = self.call(self.AUTHENTICATOR, self.ACTION_LOGOUT)
         self.token = None
+        return data
+
+    def status(self, *, summarize: bool = False) -> JsonObject:
+        """Fetch the data backing `settings.html#Status`."""
+
+        data = self.call("status", 0)
+        if summarize:
+            return summarize_status(data)
         return data
 
     def call(

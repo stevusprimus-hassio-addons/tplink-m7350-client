@@ -6,18 +6,20 @@ import argparse
 import getpass
 
 from .client import M7350Client, pretty_json
-from .config import read_password
+from .config import read_host, read_password
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(prog="tplink-m7350")
-    parser.add_argument("--host", default="http://192.168.0.1")
+    parser.add_argument("--host")
     parser.add_argument("--password")
     parser.add_argument("--env-file", default=".env")
 
     subcommands = parser.add_subparsers(dest="command", required=True)
     subcommands.add_parser("load-auth")
     subcommands.add_parser("login")
+    status = subcommands.add_parser("status")
+    status.add_argument("--raw", action="store_true")
 
     call = subcommands.add_parser("call")
     call.add_argument("module")
@@ -25,8 +27,9 @@ def main() -> int:
     call.add_argument("--no-auth", action="store_true")
 
     args = parser.parse_args()
+    host = read_host(args.host, args.env_file)
     password = read_password(args.password, args.env_file)
-    client = M7350Client(host=args.host, password=password)
+    client = M7350Client(host=host, password=password)
 
     if args.command == "load-auth":
         print(pretty_json(client.load_auth()))
@@ -35,6 +38,12 @@ def main() -> int:
     if args.command == "login":
         password = password or getpass.getpass("Router password: ")
         print(client.login(password))
+        return 0
+
+    if args.command == "status":
+        password = password or getpass.getpass("Router password: ")
+        client.login(password)
+        print(pretty_json(client.status(summarize=not args.raw)))
         return 0
 
     if args.command == "call":

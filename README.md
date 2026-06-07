@@ -30,11 +30,23 @@ PYTHONPATH=src .venv/bin/python -m unittest discover -s tests
 Create a local `.env` file:
 
 ```sh
+TPLINK_M7350_IP=192.168.0.1
 TPLINK_M7350_PASSWORD='your-router-password'
 ```
 
 ```sh
 PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli load-auth
 PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli login
+PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli status
+PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli status --raw
 PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli call webServer 0 --no-auth
 ```
+
+The `settings.html#Status` page is backed by:
+
+```json
+{"module":"status","action":0}
+```
+
+That response contains the connection, Wi-Fi, client count, and traffic statistics
+shown on the Status screen.
