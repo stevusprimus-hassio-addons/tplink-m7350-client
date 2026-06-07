@@ -1,6 +1,9 @@
-# tplink-M7350
+# tplink-m7350-client
 
 Small Python client experiments for the TP-Link M7350 local web interface.
+
+This is an unofficial project and is not affiliated with, endorsed by, or
+supported by TP-Link.
 
 ## Current Scope
 
