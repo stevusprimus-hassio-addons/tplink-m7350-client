@@ -34,6 +34,7 @@ Create or edit `examples/.env`:
 
 ```sh
 TPLINK_M7350_IP=192.168.0.1
+TPLINK_M7350_PORT=80
 TPLINK_M7350_PASSWORD='your-router-password'
 TPLINK_M7350_RATE_UNIT=KB/s
 ```
@@ -54,6 +55,7 @@ Allowed values are `auto`, `B/s`, `KB/s`, and `MB/s`; the default is `KB/s`.
 PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env load-auth
 PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env login
 PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env status
+PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env --port 8080 status
 PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env status --rate-unit MB/s
 PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env status --raw
 PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli call webServer 0 --no-auth

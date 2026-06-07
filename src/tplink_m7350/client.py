@@ -158,8 +158,7 @@ class M7350Client:
             urljoin(self.host, endpoint),
             data=body,
             headers={
-                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                "X-Requested-With": "XMLHttpRequest",
+                "Content-Type": "application/json",
                 "Accept": "*/*",
             },
             method="POST",

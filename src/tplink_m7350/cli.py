@@ -13,6 +13,7 @@ from .status import RATE_UNITS
 def main() -> int:
     parser = argparse.ArgumentParser(prog="tplink-m7350")
     parser.add_argument("--host")
+    parser.add_argument("--port")
     parser.add_argument("--password")
     parser.add_argument("--env-file", default=".env")
 
@@ -29,7 +30,7 @@ def main() -> int:
     call.add_argument("--no-auth", action="store_true")
 
     args = parser.parse_args()
-    host = read_host(args.host, args.env_file)
+    host = read_host(args.host, args.env_file, args.port)
     password = read_password(args.password, args.env_file)
     rate_unit = read_rate_unit(getattr(args, "rate_unit", None), args.env_file)
     client = M7350Client(host=host, password=password)
