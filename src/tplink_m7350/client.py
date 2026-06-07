@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import socket
 from dataclasses import dataclass, field
 from typing import Any
-from urllib.error import HTTPError, URLError
-from urllib.parse import urljoin
-from urllib.request import Request, build_opener
+from urllib.parse import urlsplit
 
 from .codec import Base64JsonCodec, Codec, CodecError, EncryptedJsonCodec, JsonObject
 from .status import DEFAULT_RATE_UNIT, summarize_status
@@ -36,7 +35,6 @@ class M7350Client:
     rsa_modulus: str | None = None
     sequence_number: str | None = None
     support_gdpr: bool | None = None
-    _opener: Any = field(init=False, repr=False)
 
     AUTHENTICATOR = "authenticator"
     WEB_SERVER = "webServer"
@@ -49,7 +47,6 @@ class M7350Client:
 
     def __post_init__(self) -> None:
         self.host = self.host.rstrip("/") + "/"
-        self._opener = build_opener()
 
     def load_auth(self) -> JsonObject:
         """Load nonce and crypto/session parameters from auth_cgi."""
@@ -154,34 +151,104 @@ class M7350Client:
 
     def _post(self, endpoint: str, payload: JsonObject, *, login: bool = False) -> JsonObject:
         body = self.codec.encode(payload, login=login).encode()
-        request = Request(
-            urljoin(self.host, endpoint),
-            data=body,
-            headers={
-                "Content-Type": "application/json",
-                "Accept": "*/*",
-            },
-            method="POST",
-        )
 
         try:
-            with self._opener.open(request, timeout=self.timeout) as response:
-                text = response.read().decode(errors="replace")
-        except HTTPError as exc:
-            raise M7350Error(f"HTTP {exc.code} from {endpoint}") from exc
-        except URLError as exc:
-            raise M7350Error(f"cannot reach router at {self.host}: {exc.reason}") from exc
+            text = self._raw_post(endpoint, body)
+        except OSError as exc:
+            raise M7350Error(f"cannot reach router at {self.host}: {exc}") from exc
 
         try:
             return self.codec.decode(text, login=login)
         except CodecError as exc:
             raise M7350Error(f"cannot decode response from {endpoint}: {exc}") from exc
 
+    def _raw_post(self, endpoint: str, body: bytes) -> str:
+        base = urlsplit(self.host)
+        if base.scheme not in {"http", ""}:
+            raise M7350Error(f"unsupported URL scheme for router host: {base.scheme}")
+
+        host = base.hostname
+        if not host:
+            raise M7350Error(f"invalid router host: {self.host}")
+        port = base.port or 80
+        path_prefix = base.path.rstrip("/")
+        path = f"{path_prefix}/{endpoint}" if path_prefix else f"/{endpoint}"
+        host_header = f"{host}:{port}" if port != 80 else host
+        header = (
+            f"POST {path} HTTP/1.1\r\n"
+            f"Host: {host_header}\r\n"
+            "User-Agent: tplink-m7350/0\r\n"
+            "Accept: */*\r\n"
+            "Content-Type: application/json\r\n"
+            f"Content-Length: {len(body)}\r\n"
+            "\r\n"
+        ).encode()
+
+        with socket.create_connection((host, port), timeout=self.timeout) as connection:
+            connection.settimeout(self.timeout)
+            connection.sendall(header + body)
+            response = _read_http_response(connection)
+
+        return _decode_http_response(bytes(response), endpoint)
+
 
 def _optional_str(value: Any) -> str | None:
     if value is None:
         return None
     return str(value)
+
+
+def _decode_http_response(response: bytes, endpoint: str) -> str:
+    header_bytes, separator, body = response.partition(b"\r\n\r\n")
+    if not separator:
+        raise M7350Error(f"invalid HTTP response from {endpoint}")
+
+    header_lines = header_bytes.decode(errors="replace").split("\r\n")
+    status_line = header_lines[0] if header_lines else ""
+    parts = status_line.split(" ", 2)
+    if len(parts) < 2 or not parts[1].isdigit():
+        raise M7350Error(f"invalid HTTP status from {endpoint}: {status_line}")
+
+    status = int(parts[1])
+    text = body.decode(errors="replace")
+    if status >= 400:
+        raise M7350Error(f"HTTP {status} from {endpoint}: {text[:200]}")
+    return text
+
+
+def _read_http_response(connection: socket.socket) -> bytes:
+    response = bytearray()
+    header_end = -1
+    content_length: int | None = None
+
+    while True:
+        chunk = connection.recv(65536)
+        if not chunk:
+            break
+        response.extend(chunk)
+
+        if header_end < 0:
+            header_end = response.find(b"\r\n\r\n")
+            if header_end >= 0:
+                content_length = _response_content_length(response[:header_end])
+
+        if header_end >= 0 and content_length is not None:
+            body_start = header_end + 4
+            if len(response) - body_start >= content_length:
+                break
+
+    return bytes(response)
+
+
+def _response_content_length(headers: bytes) -> int | None:
+    for line in headers.decode(errors="replace").split("\r\n")[1:]:
+        name, separator, value = line.partition(":")
+        if separator and name.strip().lower() == "content-length":
+            try:
+                return int(value.strip())
+            except ValueError:
+                return None
+    return None
 
 
 def pretty_json(data: JsonObject) -> str:

@@ -49,6 +49,10 @@ PYTHONPATH=src .venv/bin/python examples/status.py --rate-unit auto
 `TPLINK_M7350_RATE_UNIT` controls both upstream and downstream rate units.
 Allowed values are `auto`, `B/s`, `KB/s`, and `MB/s`; the default is `KB/s`.
 
+The client sends a small curl-shaped HTTP request and intentionally omits
+`Connection: close`, because some simple ESP32 TCP proxies close the request
+without a response when that header is present.
+
 ## CLI Examples
 
 ```sh

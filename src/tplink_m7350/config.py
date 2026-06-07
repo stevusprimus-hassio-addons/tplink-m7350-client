@@ -169,7 +169,6 @@ def normalize_port(value: str | int) -> int:
     if not 1 <= port <= 65535:
         raise ValueError(f"invalid port {value!r}; expected 1-65535")
     return port
-    return host
 
 
 def _strip_quotes(value: str) -> str:
