@@ -59,13 +59,13 @@ without a response when that header is present.
 ## CLI Examples
 
 ```sh
-PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env load-auth
-PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env login
-PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env status
-PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env --port 8080 status
-PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env status --rate-unit MB/s
-PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli --env-file examples/.env status --raw
-PYTHONPATH=src .venv/bin/python -m tplink_m7350.cli call webServer 0 --no-auth
+PYTHONPATH=src .venv/bin/python -m tplink_m7350_client.cli --env-file examples/.env load-auth
+PYTHONPATH=src .venv/bin/python -m tplink_m7350_client.cli --env-file examples/.env login
+PYTHONPATH=src .venv/bin/python -m tplink_m7350_client.cli --env-file examples/.env status
+PYTHONPATH=src .venv/bin/python -m tplink_m7350_client.cli --env-file examples/.env --port 8080 status
+PYTHONPATH=src .venv/bin/python -m tplink_m7350_client.cli --env-file examples/.env status --rate-unit MB/s
+PYTHONPATH=src .venv/bin/python -m tplink_m7350_client.cli --env-file examples/.env status --raw
+PYTHONPATH=src .venv/bin/python -m tplink_m7350_client.cli call webServer 0 --no-auth
 ```
 
 The `settings.html#Status` page is backed by:

@@ -1,6 +1,6 @@
 import unittest
 
-from tplink_m7350.status import normalize_rate_unit, summarize_status
+from tplink_m7350_client.status import normalize_rate_unit, summarize_status
 
 
 class StatusTests(unittest.TestCase):

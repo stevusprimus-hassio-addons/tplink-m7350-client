@@ -10,9 +10,9 @@ import argparse
 import json
 from pathlib import Path
 
-from tplink_m7350 import M7350Client
-from tplink_m7350.config import read_host, read_password, read_rate_unit
-from tplink_m7350.status import RATE_UNITS
+from tplink_m7350_client import M7350Client
+from tplink_m7350_client.config import read_host, read_password, read_rate_unit
+from tplink_m7350_client.status import RATE_UNITS
 
 
 ENV_FILE = Path(__file__).with_name(".env")

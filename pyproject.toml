@@ -34,7 +34,7 @@ Repository = "https://github.com/stevusprimus-hassio-addons/tplink-m7350-client"
 Issues = "https://github.com/stevusprimus-hassio-addons/tplink-m7350-client/issues"
 
 [project.scripts]
-tplink-m7350 = "tplink_m7350.cli:main"
+tplink-m7350-client = "tplink_m7350_client.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

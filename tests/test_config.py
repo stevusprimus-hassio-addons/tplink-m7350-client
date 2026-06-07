@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from tplink_m7350.config import (
+from tplink_m7350_client.config import (
     load_dotenv,
     normalize_host,
     normalize_port,

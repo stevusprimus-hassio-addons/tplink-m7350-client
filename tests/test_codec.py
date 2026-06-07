@@ -2,8 +2,8 @@ import base64
 import json
 import unittest
 
-from tplink_m7350.client import M7350AuthError, M7350Client
-from tplink_m7350.codec import Base64JsonCodec
+from tplink_m7350_client.client import M7350AuthError, M7350Client
+from tplink_m7350_client.codec import Base64JsonCodec
 
 
 class CodecTests(unittest.TestCase):
